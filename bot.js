@@ -1,16 +1,8 @@
 /*global module, require*/
 module.exports = function Bot() {
 	'use strict';
-	var http = require('http'),
-		options = {
-			host: 'proxy.foobar.com', //NOTE: To update
-			port: 8080,
-			path: '',
-			method: 'GET',
-			headers: {
-				Host: 'www.boardgamegeek.com'
-			}
-		},
+	var http = require('http'), 
+		options = require('./config'),
 		getPath = function (min, max) {
 			var url = 'http://www.boardgamegeek.com/xmlapi2/thing?id=' + min,
 				i;

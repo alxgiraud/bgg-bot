@@ -1,0 +1,25 @@
+{
+  "name": "bgg-bot",
+  "version": "0.0.0",
+  "description": "",
+  "main": "server.js",
+  "dependencies": {
+    "mongodb": "^2.0.46",
+    "xml2js": "^0.4.13"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alxgiraud/bgg-bot.git"
+  },
+  "author": "Alexandre Giraud",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alxgiraud/bgg-bot/issues"
+  },
+  "homepage": "https://github.com/alxgiraud/bgg-bot"
+}
