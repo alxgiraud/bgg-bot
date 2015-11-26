@@ -34,7 +34,7 @@ module.exports = function Parser() {
 
                     cleanObject.names = parser.getNames(dirtyObject);
 
-                    cleanObject.year_published = parser.parser.getIntValue(dirtyObject, 'yearpublished');
+                    cleanObject.year_published = parser.getIntValue(dirtyObject, 'yearpublished');
                     cleanObject.min_players = parser.getIntValue(dirtyObject, 'minplayers');
                     cleanObject.max_players = parser.getIntValue(dirtyObject, 'maxplayers');
                     cleanObject.playing_time = parser.getIntValue(dirtyObject, 'playingtime');

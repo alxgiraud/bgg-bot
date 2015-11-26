@@ -77,7 +77,6 @@ MongoClient.connect(config.mongoServerAddr, function (err, db) {
                     if (err) {
                         logger.writeError(err, 'Insertion failed');
                     }
-                    console.log(res.result);
                 }
             };
 
