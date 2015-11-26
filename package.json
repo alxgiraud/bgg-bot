@@ -1,7 +1,7 @@
 {
   "name": "bgg-bot",
-  "version": "0.0.0",
-  "description": "",
+  "version": "0.0.1",
+  "description": "BGG BOT is a NodeJS script using the boardgamegeek API to insert boardgame data in a MongoDB database.",
   "main": "server.js",
   "dependencies": {
     "mongodb": "^2.0.46",
