@@ -1,81 +1,93 @@
 /*global require, console, process*/
-var MongoClient = require('mongodb').MongoClient,
-    Bot = require('./bot'),
+var config = require('./configBot'),
+    MongoClient = require('mongodb').MongoClient,
+    ApiServices = require('./apiServices'),
     Parser = require('./parser'),
-    url = 'mongodb://localhost:27017/bgg', //MongoDB server address
-    maxGamesPerApiCall = 50,
-    paramId = process.argv[2];
+    Logger = require('./logger'),
+    logger = new Logger();
 
-MongoClient.connect(url, function (err, db) {
+MongoClient.connect(config.mongoServerAddr, function (err, db) {
     'use strict';
-    console.log('Connected correctly to MongoDB server');
-    var bot = new Bot(),
-        start = 1,
-        end = start + maxGamesPerApiCall - 1,
+    if (err) {
+        logger.writeError(err, 'connection MongoDB server');
+        console.error('Error connection MongoDB server');
+    } else {
+        console.log('Connected correctly to MongoDB server');
+        var apiServices = new ApiServices(),
+            bot = {
+                init: function () {
+                    var start = 1,
+                        end = start + config.maxApiCall - 1,
+                        firstArgument = process.argv[2];
 
-        insertBoardgames = function (boardgames) {
-            db.collection('boardgames_debug').insertMany(
-                boardgames,
-                function (err, records) {
-                    if (err) {
-                        console.error('[ERROR] Insertion failed');
-                        console.error(err.message);
+                    if (typeof firstArgument !== 'undefined') {
+                        if (isNaN(parseInt(firstArgument, 10))) {
+                            logger.writeError(null, 'First argument must be a number (argument passed: \'' + firstArgument + '\')');
+                        } else {
+                            apiServices.getBoardgames(firstArgument, 0, bot.callbackApi);
+                        }
                     } else {
-                        console.log('[' +
-                            records.ops[0].game_id + '-' +
-                            records.ops[records.ops.length - 1].game_id +
-                            '] ' +
-                            records.result.n + ' documents inserted');
+                        bot.run(start, end);
                     }
+                },
+                run: function (start, end) {
+                    logger.writeLog('[' + start + '-' + end + '] Call API');
+                    apiServices.getBoardgames(start, end, bot.callbackApi);
+                    start += config.maxApiCall;
+                    end += config.maxApiCall;
+                    setTimeout(function () {
+                        bot.run(start, end);
+                    }, 5000);
+                },
+                callbackApi: function (err, result) {
+                    var parser = new Parser(),
+                        boardgames = [];
+
+                    if (err) {
+                        logger.writeError(err, 'API call failed');
+                        return;
+                    }
+
+                    parser.parseBggXml(result, function (err, boardgames) {
+                        if (err) {
+                            logger.writeError(err, 'Parsing failed');
+                        } else if (typeof boardgames === 'undefined') {
+                            logger.writeLog('No board games found');
+                        } else {
+                            bot.insertBoardgames(boardgames);
+                        }
+                    });
+                },
+                insertBoardgames: function (boardgames) {
+                    var i, boardgame, total = 0;
+                    for (i = 0; i < boardgames.length; i += 1) {
+                        boardgame = boardgames[i];
+                        if (boardgame.hasOwnProperty('game_id')) {
+                            total += 1;
+                            db.collection('boardgames_fulldebug').update({
+                                game_id: boardgame.game_id
+                            }, boardgame, {
+                                upsert: true
+                            }, bot.callbackUpset);
+                        }
+                    }
+                    logger.writeLog(total + ' board games processed');
+                },
+                callbackUpset: function (err, res) {
+                    if (err) {
+                        logger.writeError(err, 'Insertion failed');
+                    }
+                    console.log(res.result);
                 }
-            );
-        },
+            };
 
-        callbackApi = function (err, result) {
-            var parser = new Parser(),
-                boardgames = [];
+        bot.init();
 
-            if (err) {
-                console.error('[ERROR] API call failed');
-                console.error(err);
-                return;
-            }
-
-            parser.parseBggXml(result, function (err, boardgames) {
-                if (err) {
-                    console.error('[ERROR] Parsing failed');
-                    console.error(err);
-                } else if (typeof boardgames === 'undefined') {
-                    console.log('No document inserted');
-                } else {
-                    insertBoardgames(boardgames);
-                }
-            });
-        },
-
-        launchBot = function () {
-            if (typeof paramId !== 'undefined') {
-                if (isNaN(parseInt(paramId, 10))) {
-                    console.error("Parameter invalid (must be a number): " + paramId);
-                } else {
-                    bot.getBoardgames(paramId, 0, callbackApi);
-                }
-            } else {
-
-                console.log('[' + start + '-' + end + '] Call API');
-                bot.getBoardgames(start, end, callbackApi);
-                start += maxGamesPerApiCall;
-                end += maxGamesPerApiCall;
-                setTimeout(launchBot, 5000);
-            }
-        };
-
-    launchBot();
-
-    process.on('SIGINT', function () {
-        db.close();
-        console.log('Disconnected to MongoDB server');
-        console.log('Bye');
-        process.exit();
-    });
+        process.on('SIGINT', function () {
+            db.close();
+            console.log('Disconnected to MongoDB server');
+            console.log('Bye');
+            process.exit();
+        });
+    }
 });
