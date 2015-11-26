@@ -1,10 +1,13 @@
 # BGG BOT
 BGG BOT is a NodeJS script using the boardgamegeek API to insert boardgame data in a MongoDB database.
 
-Type `node server.js` to run the script and call the API. Logs will be written in a folder named logs.
-Add a parameter when lauching the script to update/insert a specific game by his ID (e. g. `node server.js 1234`)
+Type `node server.js` to run the script then type in the prompt the first and last game ID to to call with the API.
+The bot will call all the related games between these IDs and insert/update them in the database.
+
+Please visit https://boardgamegeek.com/wiki/page/BGG_XML_API2 for further information about boardgamegeek API.
 
 Dependencies:
 
- - mongodb: "^2.0.46"
- - xml2js: "^0.4.13"
+ - mongodb
+ - xml2js
+ - prompt
